@@ -7,25 +7,25 @@ if (host == "www.nytimes.com"){
 
     console.log(element);
 
-    // Send element by http post request
-    var xmlHttp = new XMLHttpRequest();
-    xmlHttp.onreadystatechange = function() { 
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
-            callback(xmlHttp.responseText);
-    }
-    const request_url = "http://IP:PORT/path?" + element
-    xmlHttp.open("GET", request_url, true);
-    xmlHttp.send();
+    // // Send element by http post request
+    // var xmlHttp = new XMLHttpRequest();
+    // xmlHttp.onreadystatechange = function() { 
+    //     if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+    //         callback(xmlHttp.responseText);
+    // }
+    // const request_url = "http://IP:PORT/path?" + element
+    // xmlHttp.open("GET", request_url, true);
+    // xmlHttp.send();
     
-    // Get processed JSON
-    const Http = new XMLHttpRequest();
-    const get_request_url = 'http://IP:PORT/path';
-    Http.open("GET", get_request_url);
-    Http.send();
+    // // Get processed JSON
+    // const Http = new XMLHttpRequest();
+    // const get_request_url = 'http://IP:PORT/path';
+    // Http.open("GET", get_request_url);
+    // Http.send();
 
-    Http.onreadystatechange = (e) => {
-      console.log(Http.responseText)
-    }
+    // Http.onreadystatechange = (e) => {
+    //   console.log(Http.responseText)
+    // }
 
     text_chunks[index].innerText = 'hello hello hello hello';
   }
