@@ -1,0 +1,11 @@
+{
+  "name": "Reader",
+  "version": "0.1",
+
+  "manifest_version": 2,
+  
+  "content_scripts": [{
+    "js": ["article.js"],
+    "matches": ["<all_urls>"]
+  }]
+}
