@@ -4,6 +4,11 @@
 
   "manifest_version": 2,
   
+  "browser_action": {
+    "default_title": "Change settings.",
+    "default_popup": "popup.html"
+  },
+
   "content_scripts": [{
     "js": ["article.js"],
     "matches": ["<all_urls>"]
