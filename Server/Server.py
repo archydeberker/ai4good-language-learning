@@ -32,7 +32,7 @@ def query_example():
     input={"text":text}
 
     def get_key():
-        f = '../Secrets/yandex_key.json'
+        f = './Secrets/yandex_key.json'
         cred = json.loads(open(f).read())
         return cred['api_key']
 
