@@ -1,21 +1,23 @@
 import spacy
 import requests
 import os
+import logging
 
-
+logger = logging.getLogger('translation_backed')
+logger.setLevel(logging.DEBUG)
 
 nlp = spacy.load('/Users/archy/anaconda/envs/translation/lib/python3.5/site-packages/en_core_web_sm/en_core_web_sm-2.1.0')
+
+API_KEY = os.getenv('YANDEX_API_KEY')
 
 
 def get_translation(word):
     r = requests.post('https://translate.yandex.net/api/v1.5/tr.json/translate',
-                      data={'key': api_key,
+                      data={'key': API_KEY,
                             'text': word,
                             'lang': 'en-fr'})
 
     return ' '.join(r.json()['text'])
-
-
 
 
 def process_raw_input(input, source='html'):
@@ -38,7 +40,7 @@ def _add_chunk(text, original_text=None):
     return dict(text=text,
                 original=original_text)
 
-def _to_translate_wrapper(text, to_translate=True)
+def _to_translate_wrapper(text, to_translate=True):
     return dict(text=text,
                 to_translate=to_translate)
 
@@ -62,14 +64,11 @@ def parse_text(text_input):
     for token in doc:
         if token.pos_ == 'DET' or token.pos_ == 'ADJ':
             trace.append(token.text_with_ws)
-            print(token.text_with_ws)
         elif token.pos_ == 'NOUN' or token.pos_ == 'PROPN':
             if len(trace) > 0:
                 trace.append(token.text_with_ws)
-                print('translating', trace)
                 output_array.append(_to_translate_wrapper(' '.join(trace), True))
                 trace = []
-                print('___')
             else:
                 output_array.append(_to_translate_wrapper(token.text_with_ws, True))
         else:
@@ -117,17 +116,25 @@ def translate(graded_parsed_text, score_threshold=0):
               ]
 
     """
-
+    output = []
     for chunk in graded_parsed_text:
-        if item['to_translate']:
+        if chunk['to_translate']:
+            translated_text = get_translation(chunk['text'])
+            output.append(_add_chunk(translated_text, chunk['text']))
+        else:
+            output.append(_add_chunk(chunk['text'], None))
+
+    return output
+
 
 def read_dummy_data():
-    with open('hod-raw.txt') as f:
+    with open('../test-doc.txt') as f:
         output = f.readlines()
 
     return output
 
-def main(input):
+
+def main(input=None):
     """
 
     Parameters
@@ -151,15 +158,27 @@ def main(input):
         # Ultimately, we'd like to learn this threshold and adjust over time
         user_level = input['level']
     else:
+        input = dict()
         input['text'] = read_dummy_data()
         input['source'] = 'html'
         input['level'] = 1
 
-    processed_text = process_raw_input(text, source)
+    processed_text = process_raw_input(input['text'], input['source'])
+
+    logger.info('Parsing text')
     parsed_text = parse_text(processed_text)
+
+    logger.info('Assessing difficulty')
     graded_parsed_text = assess_difficulty(parsed_text)
 
-    translated_text = translate(graded_parsed_text, score_threshold=user_level)
+    logger.info('Translating text')
+    translated_text = translate(graded_parsed_text, score_threshold=input['level'])
+
+    logger.info(translated_text)
 
     return translated_text
+
+
+if __name__ == '__main__':
+    main()
 
