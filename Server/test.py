@@ -7,14 +7,14 @@ from pprint import pprint
 
 
 def get_key():
-    f = './Flask_Server/Secrets/yandex_key.json'
+    f = r'./Server/Secrets/yandex_key.json'
     cred = json.loads(open(f).read())
     return cred['api_key']
 
 logger = logging.getLogger('translation_backed')
 logger.setLevel(logging.DEBUG)
 
-nlp = spacy.load('/home/rahul/anaconda3/envs/ai4_env/lib/python3.7/site-packages/en_core_web_sm/en_core_web_sm-2.0.0/')
+nlp = spacy.load(r'/home/rahul/anaconda3/envs/ai4_env/lib/python3.7/site-packages/en_core_web_sm/en_core_web_sm-2.0.0/')
 
 API_KEY = get_key()
 
@@ -138,7 +138,7 @@ def translate(graded_parsed_text, score_threshold=0):
 
 
 def read_dummy_data():
-    with open('./Flask_Server/test-doc.txt') as f:
+    with open('./Server/test-doc.txt') as f:
         output = f.readlines()
 
     return output
