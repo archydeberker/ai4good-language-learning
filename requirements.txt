@@ -9,6 +9,7 @@ decorator==4.4.0
 defusedxml==0.6.0
 entrypoints==0.3
 gunicorn
+Flask==1.0.2
 idna==2.8
 ipykernel==5.1.0
 ipython==7.5.0
