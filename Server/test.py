@@ -7,7 +7,7 @@ from pprint import pprint
 
 
 def get_key():
-    f = r'./Server/Secrets/yandex_key.json'
+    f = '../Server/Secrets/yandex_key.json'
     cred = json.loads(open(f).read())
     return cred['api_key']
 
