@@ -8,6 +8,7 @@ cymem==2.0.2
 decorator==4.4.0
 defusedxml==0.6.0
 entrypoints==0.3
+gunicorn
 idna==2.8
 ipykernel==5.1.0
 ipython==7.5.0
