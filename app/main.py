@@ -10,7 +10,22 @@ nlp = spacy.load('/Users/archy/anaconda/envs/translation/lib/python3.5/site-pack
 
 API_KEY = os.getenv('YANDEX_API_KEY')
 
+directory = "words/"
+data = {}
+for filename in os.listdir(directory):
+    if filename.endswith(".txt"): 
+        print(os.path.join(directory, filename))
+        with open(os.path.join(directory, filename), encoding="ISO-8859-1") as f:
+            data[filename[0:-4]] = f.read().split("Ê\n")
+        continue
+    else:
+        continue
 
+def get_word_level(word):
+    for level, words in data.items():
+        if word in words:
+            return level[-2:]
+        
 def get_translation(word):
     r = requests.post('https://translate.yandex.net/api/v1.5/tr.json/translate',
                       data={'key': API_KEY,
@@ -93,9 +108,16 @@ def assess_difficulty(parsed_text):
     graded_parsed_text: array of text supplemented by difficulty scores
 
     """
-
+    output = []
+    for word in parsed_text:
+        level = get_word_level(word)
+        if level is not None:
+            output.append(int(level))
+        else:
+            output.append(20)
+        
     # For now, let's return everything with to_translate left as true
-    return parsed_text
+    return np.mean(output)
 
 
 def translate(graded_parsed_text, score_threshold=0):
