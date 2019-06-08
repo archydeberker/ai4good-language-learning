@@ -206,7 +206,8 @@ def query_example():
         logger.info(translated_text)
 
         return translated_text
-    translated_text={id:i for id,i in enumerate(main_function(input))}
+
+    translated_text = main_function(input)
     return jsonify(translated_text)
 
 
