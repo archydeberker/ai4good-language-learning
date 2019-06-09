@@ -63,6 +63,8 @@ def query_example():
 
     API_KEY = get_key('./Secrets/yandex_key.json','api_key')
 
+    word_to_difficulty = setup_wordlists()
+
     def get_translation(word):
         r = requests.post('https://translate.yandex.net/api/v1.5/tr.json/translate',
                           data={'key': API_KEY,
@@ -131,6 +133,39 @@ def query_example():
                 output_array.append(_to_translate_wrapper(token.text_with_ws, False))
 
         return output_array
+
+    def update_level(level, read_chunks, unknown_chunks, k=1):
+        expected = 0
+        actual = 0
+        for chunk in read_chunks:
+            words = chunk.split(' ')
+            chunk_level = max(word_to_difficulty[w] for w in words)
+            expected += 1 / (1 + 10**((chunk_level - level)/20))
+            if chunk not in unknown_chunks:
+                actual += 1
+            else:
+                actual -= 1
+
+        level += k * (actual - expected)
+        return max(level, 1)
+
+    def setup_wordlists(directory='vocab/'):
+        data = {}
+        for filename in os.listdir(directory):
+            if filename.endswith(".txt"):
+                with open(os.path.join(directory, filename), encoding="ISO-8859-1") as f:
+                    data[filename[0:-4]] = f.read().split("Ê\n")
+                continue
+            else:
+                continue
+
+        words_to_difficulty = {}
+        for level, words in data.items():
+            level_int = int(level.split()[-1])
+            for word in words:
+                words_to_difficulty[word] = level_int
+
+        return words_to_difficulty
 
     def assess_difficulty(parsed_text):
         """
@@ -240,23 +275,6 @@ def query_example():
     translated_text=[{"timestamp":now,"time_taken":time_taken}]+main_function(input,ip)
     # return jsonify({id:item for id, item in enumerate(translated_text)})
     return jsonify(translated_text)
-
-    def update_level(level, read_chunks, unknown_chunks, k=1):
-        expected = 0
-        actual = 0
-        for chunk in read_chunks:
-            words = chunk.split(' ')
-            chunk_level = max(get_word_level(w) for w in words)
-            expected += 1 / (1 + 10**((chunk_level - level)/20))
-            if chunk not in unknown_chunks:
-                actual += 1
-            else:
-                actual -= 1
-
-        level += k * (actual - expected)
-        return max(level, 1)
-
-
 
 if __name__ == '__main__':
     app.run(debug=True,host= '127.0.0.1', port=5000) #run app in debug mode on port 5000
