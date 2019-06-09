@@ -177,7 +177,9 @@ def query_example():
         actual = 0
         for chunk in read_chunks:
             words = chunk.split(' ')
-            chunk_level = max(word_to_difficulty.get(w, 10) for w in words)
+            chunk_level = max(word_to_difficulty.get(w, 0) for w in words)
+            if chunk_level == 0:
+                continue
             expected += 1 / (1 + 10**((chunk_level - level)/20))
             if chunk not in unknown_chunks:
                 actual += 1
@@ -203,15 +205,26 @@ def query_example():
 
         """
         for chunk in parsed_text:
-            chunk_levels = [word_to_difficulty.get(w, None) for w in chunk['original']]
-            if any(level is None for level in chunk_levels)
+            if not chunk['to_translate']:
                 continue
 
-            chunk_level = max(chunk_levels)
-            if chunk_level <= user_level:
+            words = chunk['text'].split(' ')
+            print(words)
+            chunk_levels = [word_to_difficulty.get(w, 0) for w in words if len(w) > 0]
+            if not chunk_levels or sum(chunk_levels) == 0:
+                chunk['to_translate'] = False
+                continue
+
+            chunk_level = max(level for level in chunk_levels)
+            print(chunk)
+            print(chunk_levels)
+            if chunk_level > 0 and chunk_level <= user_level:
                 # to_translate = (random.random() > 1/level)
                 to_translate = True
                 chunk['to_translate'] = to_translate
+            else:
+                chunk['to_translate'] = False
+
 
         return parsed_text
 
