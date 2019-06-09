@@ -1,12 +1,11 @@
 {
-  "name": "Reader",
+  "name": "Bienvenue",
   "version": "0.1",
 
   "manifest_version": 2,
   
   "browser_action": {
-    "default_title": "Change settings.",
-    "default_popup": "popup.html"
+    "default_icon": "bienvenue.png"
   },
 
   "content_scripts": [{
