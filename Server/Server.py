@@ -241,14 +241,14 @@ def query_example():
     # return jsonify({id:item for id, item in enumerate(translated_text)})
     return jsonify(translated_text)
 
-    def update_level(level, read_words, highlighted_words, k=1):
+    def update_level(level, read_chunks, unknown_chunks, k=1):
         expected = 0
         actual = 0
-        for word in read_words:
-            word_level = get_word_level(word)
-            word_level = 10
-            expected += 1 / (1 + 10**((word_level - level)/20))
-            if word not in highlighted_words:
+        for chunk in read_chunks:
+            words = chunk.split(' ')
+            chunk_level = max(get_word_level(w) for w in words)
+            expected += 1 / (1 + 10**((chunk_level - level)/20))
+            if chunk not in unknown_chunks:
                 actual += 1
             else:
                 actual -= 1
