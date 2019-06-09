@@ -6,8 +6,9 @@ import spacy
 import requests
 import os
 import logging
+import en_core_web_sm
 
-api_key = "trnsl.1.1.20190608T143804Z.5c3e6c70dd10f0c5.f9e43635fd2c9dbe6f7016cf8de72bb011e95b01"
+
 
 app = Flask(__name__)
 
@@ -32,15 +33,15 @@ def query_example():
     input={"text":text}
 
     def get_key():
-        f = '../Secrets/yandex_key.json'
-        cred = json.loads(open(f).read())
-        return cred['api_key']
+        # f = './Secrets/yandex_key.json'
+        # cred = json.loads(open(f).read())
+        # return cred['api_key']
+        return os.getenv('YANDEX_API_KEY')
 
     logger = logging.getLogger('translation_backed')
     logger.setLevel(logging.DEBUG)
 
-    nlp = spacy.load(
-        '/home/rahul/anaconda3/envs/ai4_env/lib/python3.7/site-packages/en_core_web_sm/en_core_web_sm-2.0.0/')
+    nlp = en_core_web_sm.load()
 
     API_KEY = get_key()
 
