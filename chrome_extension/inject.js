@@ -61,7 +61,7 @@ if ( host.toLowerCase().includes("youtube") ) {
   var subtitle_template_url = "https://video.google.com/timedtext?lang=en&v=",
       video_id = getUrlParam('v','XdAyvrFvEzs'),
       movie_player = document.getElementById("movie_player"),
-      current_knowledge_level = parseInt( localStorage['lazy_land__knowledge_level'] || "1"),
+      current_knowledge_level = parseInt( localStorage['lazy_land__knowledge_level'] || getUrlParam('level',"10") ),
       current_dictionary = Object.assign({}, ...simple_words.slice(0,current_knowledge_level)),
       div_subtitles, div_translated_subtitles, inst,
       xml_data = [],xml_current_entry = -1,
@@ -77,6 +77,14 @@ if ( host.toLowerCase().includes("youtube") ) {
             let parser = new DOMParser();
             let xml = parser.parseFromString(xhr.responseText,"text/xml");
             let xml_texts = xml.children[0].children;
+            let txts = [];
+            for (let i = 0; i < xml_texts.length; i++) {
+            	txts.push(htmlDecode(xml_texts[i].innerHTML));
+            }
+            get_translate_from_server(txts, function () {
+
+            });
+
             for (let i = 0; i < xml_texts.length; i++) {
               let txt = xml_texts[ i ];
               let decodedText = htmlDecode(txt.innerHTML)
@@ -168,6 +176,27 @@ if ( host.toLowerCase().includes("youtube") ) {
               // wait_function(cb0, cb1);
           }, 200);
       }
+  }
+
+  function get_translate_from_server(list, callback) {
+  	let str_parameters = JSON.stringify(list);
+  	escape(str_parameters);
+	console.log("https://846006a2.ngrok.io/query-youtube?text=" + str_parameters)
+	// var xhr = new XMLHttpRequest();
+
+	// xhr.open("GET", "https://846006a2.ngrok.io/query-youtube?text=" + str_parameters, true);
+
+	// //Send the proper header information along with the request
+	// xhr.setRequestHeader("Content-type", "application/json");
+
+	// xhr.onreadystatechange = function() {
+	// 	console.log(xhr.readyState);
+	// 	console.log(xhr.responseText);
+	//   if (xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {
+	//     callback();
+	//   }
+	// };
+	// xhr.send();
   }
 
   window.onload = function() {

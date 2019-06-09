@@ -1,14 +1,46 @@
 from flask import Flask, request ,redirect,jsonify
 import requests
+import random
 import json
+import time
 import os
 import spacy
 import requests
 import os
 import logging
+from datetime import datetime
 import en_core_web_sm
 
 
+def setup_wordlists(directory='vocab/'):
+    data = {}
+    for filename in os.listdir(directory):
+        if filename.endswith(".txt"):
+            with open(os.path.join(directory, filename), encoding="ISO-8859-1") as f:
+                data[filename[0:-4]] = f.read().split("Ê\n")
+            continue
+        else:
+            continue
+
+    words_to_difficulty = {}
+    for level, words in data.items():
+        level_int = int(level.split()[-1])
+        for word in words:
+            words_to_difficulty[word] = level_int
+
+    return words_to_difficulty
+
+def update_user_json(filepath, translated_text, ip):
+    with open(filepath, 'r') as fp:
+        user_dict = json.load(fp)
+    user_dict[ip]['most_recent_session']['translated_chunks'] = [chunk['original'] for chunk in translated_text if chunk['original'] is not None]
+    with open(filepath, 'w') as fp:
+        json.dump(user_dict, fp, indent=2)
+
+def get_key(filename, key):
+    f = filename
+    cred = json.loads(open(f).read())
+    return cred[key]
 
 app = Flask(__name__)
 
@@ -18,6 +50,11 @@ def index():
 
 @app.route('/translate', methods=['GET'])
 def translate():
+    try:
+        api_key = get_key('./Secrets/yandex_key.json', 'api_key')
+    except:
+        api_key = os.getenv('YANDEX_API_KEY')
+
     text=request.args["txt"]
     r = requests.post('https://translate.yandex.net/api/v1.5/tr.json/translate',
                       data={'key': api_key,
@@ -26,31 +63,52 @@ def translate():
     return jsonify(r.json())
 
 
-
 @app.route('/query-example')
 def query_example():
-    text=request.args["text"]
-    input={"text":text}
 
-    def get_key():
-        # f = './Secrets/yandex_key.json'
-        # cred = json.loads(open(f).read())
-        # return cred['api_key']
-        return os.getenv('YANDEX_API_KEY')
+    def get_key(filename,key):
+        f = filename
+        cred = json.loads(open(f).read())
+        return cred[key]
+
+    def get_level(filename, ip):
+        f = filename
+        cred = json.loads(open(f).read())
+        if ip not in cred:
+            cred[ip] = dict(last_estimated_level=10,
+                            most_recent_session=dict(translated_chunks=[],
+                                                     clicked_chunks=[]))
+
+        with open(filename, 'w') as fp:
+            json.dump(cred, fp, indent=2)
+
+        return cred[ip]['last_estimated_level']
+
+    def get_session_info(filename, ip):
+        f = filename
+        cred = json.loads(open(f).read())
+
+        return cred[ip]['most_recent_session']['translated_chunks'], cred[ip]['most_recent_session']['clicked_chunks']
+
 
     logger = logging.getLogger('translation_backed')
     logger.setLevel(logging.DEBUG)
 
     nlp = en_core_web_sm.load()
 
-    API_KEY = get_key()
+    try:
+        API_KEY = get_key('./Secrets/yandex_key.json', 'api_key')
+    except:
+        API_KEY = os.getenv('YANDEX_API_KEY')
+
+    word_to_difficulty = setup_wordlists()
 
     def get_translation(word):
         r = requests.post('https://translate.yandex.net/api/v1.5/tr.json/translate',
                           data={'key': API_KEY,
                                 'text': word,
                                 'lang': 'en-fr'})
-
+        print(r.json())
         return ' '.join(r.json()['text'])
 
     def process_raw_input(input, source='html'):
@@ -114,7 +172,25 @@ def query_example():
 
         return output_array
 
-    def assess_difficulty(parsed_text):
+    def update_level(level, read_chunks, unknown_chunks, k=1):
+        expected = 0
+        actual = 0
+        for chunk in read_chunks:
+            words = chunk.split(' ')
+            chunk_level = max(word_to_difficulty.get(w, 10) for w in words)
+            expected += 1 / (1 + 10**((chunk_level - level)/20))
+            if chunk not in unknown_chunks:
+                actual += 1
+            else:
+                actual -= 1
+
+        level += k * (actual - expected)
+
+        level = max(level, 1)
+
+        return level
+
+    def assess_difficulty(parsed_text, user_level, k=1):
         """
 
         Parameters
@@ -126,11 +202,20 @@ def query_example():
         graded_parsed_text: array of text supplemented by difficulty scores
 
         """
+        for chunk in parsed_text:
+            chunk_levels = [word_to_difficulty.get(w, None) for w in chunk['original']]
+            if any(level is None for level in chunk_levels)
+                continue
 
-        # For now, let's return everything with to_translate left as true
+            chunk_level = max(chunk_levels)
+            if chunk_level <= user_level:
+                # to_translate = (random.random() > 1/level)
+                to_translate = True
+                chunk['to_translate'] = to_translate
+
         return parsed_text
 
-    def translate(graded_parsed_text, score_threshold=0):
+    def translate(graded_parsed_text):
         """
         Translate all chunks in graded_parsed_text for which the difficulty score is below the given threshold.
 
@@ -159,12 +244,12 @@ def query_example():
         return output
 
     def read_dummy_data():
-        with open('../test-doc.txt') as f:
+        with open('./test-doc.txt') as f:
             output = f.readlines()
 
         return output
 
-    def main_function(input=None):
+    def main_function(input=None,ip=None):
         """
 
         Parameters
@@ -181,17 +266,21 @@ def query_example():
                     original: the original form of that text. if None, it has not been translated.
 
         """
+
         if input is not None:
             text = input.get('text')
             source = input.get('source', None)
 
-            # Ultimately, we'd like to learn this threshold and adjust over time
-            user_level = input.get('level', 1)
+            # Check the user level from our JSON
+            user_level = get_level("./users_level_file.json", ip)
+            read_words, unknown_words = get_session_info("./users_level_file.json", ip)
+
+            user_level = update_level(user_level, read_words, unknown_words)
         else:
             input = dict()
-            input['text'] = read_dummy_data()
+            read_words = read_dummy_data()
             input['source'] = 'html'
-            input['level'] = 1
+            user_level = 1
 
         processed_text = process_raw_input(text, source)
 
@@ -199,19 +288,31 @@ def query_example():
         parsed_text = parse_text(processed_text)
 
         logger.info('Assessing difficulty')
-        graded_parsed_text = assess_difficulty(parsed_text)
+        graded_parsed_text = assess_difficulty(parsed_text, user_level)
 
         logger.info('Translating text')
-        translated_text = translate(graded_parsed_text, score_threshold=user_level)
+        translated_text = translate(graded_parsed_text)
 
         logger.info(translated_text)
 
-        return translated_text
+        return [{"ip": ip, "user_level": user_level}], translated_text
 
-    translated_text = main_function(input)
+    input = request.args
+    start = time.clock()
+    ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    now = datetime.now()
+    time_taken = time.clock() - start
+
+    user_json, translated_text = main_function(input, ip)
+
+    # Update the user json with the new words we've translated
+    update_user_json("./users_level_file.json", translated_text, ip)
+
+    translated_text = [{"timestamp": now,
+                      "time_taken": time_taken}] + translated_text
+
     return jsonify(translated_text)
 
 
-
 if __name__ == '__main__':
-    app.run(debug=True,host= '172.16.54.207', port=5000) #run app in debug mode on port 5000
+    app.run(debug=True,host= '127.0.0.1', port=5000) #run app in debug mode on port 5000
