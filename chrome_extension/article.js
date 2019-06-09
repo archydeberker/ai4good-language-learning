@@ -70,7 +70,7 @@ function display() {
 	    bienvenue_header.append(bienvenue_no);
 
 	    assessment_quiz_span.innerText = assessment_quiz_dict[assessment_idx][0];
-	    console.log(Object.values(assessment_quiz_dict[assessment_idx]))
+	    //console.log(Object.values(assessment_quiz_dict[assessment_idx]))
 	}// end show quiz
 	function getMaxLevel() {
 	    max_score = -1;
@@ -125,42 +125,35 @@ display();
 //   }
 // }
 
-if (host == "www.ledevoir.com" || host == "time.com" || host == "en.wikipedia.org" || host == ""){
+if (host == "www.ledevoir.com" || host == "time.com" || host == "en.wikipedia.org" || host == "" || host == "www.newyorker.com" || true){
   text_chunks = document.getElementsByTagName('p');
   console.log(text_chunks);
-  for (let index = 0; index < text_chunks.length; index++) {
+  for (let index = 0; index < 2; index++) {
     var element = text_chunks[index].innerText;
     console.log(element);
 
     var Http = new XMLHttpRequest();
-    var url = "https://846006a2.ngrok.io/query-example?text=" + element;
+    var url = "http://ai4good-translation.herokuapp.com/query-example?text=" + element;
     Http.open("GET", url);
     Http.send();
 
-    text_resampled = {};
-
+    text_chunks[index].innerText ="";
     Http.onreadystatechange = function () {
       if(Http.readyState === 4 && Http.status === 200) {
+        console.log(text_chunks[index]);
+        console.log(text_chunks[index].innerText);
         obj = JSON.parse(Http.responseText);
         console.log(obj[0]);
-        for (let index = 2; index < obj.length; index++) {
-          console.log(obj[index]);
-          // const element = array[index];
-          // if(element.text)
-          // {
-          //   console.log(element.original) 
-          // }
-          // else console.log(element.text);
+        for (let resp_index = 2; resp_index < obj.length; resp_index++) {
+          console.log(obj[resp_index]);
+          if(obj[resp_index].original)
+          {
+            text_chunks[index].innerHTML += "<b>" + obj[resp_index].text + "</b>";
+          }
+          else
+            text_chunks[index].innerHTML += " " + obj[resp_index].text;
         }
       }
     }
   }
-
-    // text_chunks[index].innerText ="";
-    // for (var word in text_resampled) {
-    //   console.log(word)
-    //   //console.log("hello");
-    //   // text_chunks[index].innerText += text_resampled[word];
-    //   // console.log( word + "  " + text_resampled[word])
-    // }
 }
