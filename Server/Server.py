@@ -10,6 +10,14 @@ import logging
 from datetime import datetime
 
 
+def update_user_json(filepath, translated_text, ip):
+    with open(filepath, 'r') as fp:
+        user_dict = json.load(fp)
+    user_dict[ip]['most_recent_session']['translated_chunks'] = [chunk['text'] for chunk in translated_text if chunk['original'] is not None]
+    with open(filepath, 'w') as fp:
+        json.dump(user_dict, fp, indent=2)
+
+
 def get_key(filename, key):
     f = filename
     cred = json.loads(open(f).read())
@@ -40,17 +48,25 @@ def query_example():
         cred = json.loads(open(f).read())
         return cred[key]
 
-    def get_level(filename,ip):
+    def get_level(filename, ip):
         f = filename
         cred = json.loads(open(f).read())
         if ip not in cred:
-            cred[ip]=1
+            cred[ip] = 1
         return cred[ip]
 
-    def update_level(filepath,level,ip):
+    def get_session_info(filename):
+        f = filename
+        cred = json.loads(open(f).read())
+        if ip not in cred:
+            cred[ip] = 1
+
+        return cred[ip]['most_recent_session']['translated_chunks'], cred[ip]['most_recent_session']['clicked_chunks']
+
+    def update_level(filepath, level, ip):
         with open(filepath, 'r') as fp:
             information = json.load(fp)
-        information[ip]=level
+        information[ip] = level
         with open(filepath, 'w') as fp:
             json.dump(information, fp, indent=2)
         return level
@@ -234,16 +250,17 @@ def query_example():
                     original: the original form of that text. if None, it has not been translated.
 
         """
+
+
         if input is not None:
             text = input.get('text')
             source = input.get('source', None)
 
-            # Ultimately, we'd like to learn this threshold and adjust over time
-            if not input.get("level"):
-                user_level=get_level("./users_level_file.json",ip)
-            elif input.get("level"):
-                given_level=input.get("level")
-                user_level = update_level("./users_level_file.json",given_level,ip)
+            # Check the user level from our JSON
+            user_level = get_level("./users_level_file.json", ip)
+            read_words, unknown_words = get_session_info("./users_level_file.json", ip)
+
+            user_level = update_level(user_level, read_words, unknown_words)
         else:
             input = dict()
             input['text'] = read_dummy_data()
@@ -263,17 +280,22 @@ def query_example():
 
         logger.info(translated_text)
 
-        return [{"ip":ip,"user_level":user_level}]+translated_text
-    #translated_text={id:i for id,i in enumerate(main_function(input))}
-    # text = request.args["text"]
-    # input = {"text": text}
-    input=request.args
+        return [{"ip": ip, "user_level": user_level}] + translated_text
+
+    input = request.args
     start = time.clock()
     ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
     now = datetime.now()
-    time_taken=time.clock() - start
-    translated_text=[{"timestamp":now,"time_taken":time_taken}]+main_function(input,ip)
-    # return jsonify({id:item for id, item in enumerate(translated_text)})
+    time_taken = time.clock() - start
+
+    user_json, translated_text = main_function(input, ip)
+
+    # Update the user json with the new words we've translated
+    update_user_json("./users_level_file.json", translated_text, ip)
+
+    translated_text = [{"timestamp": now,
+                      "time_taken": time_taken}] + translated_text
+
     return jsonify(translated_text)
 
 if __name__ == '__main__':
