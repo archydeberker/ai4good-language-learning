@@ -1,14 +1,19 @@
 from flask import Flask, request ,redirect,jsonify
 import requests
 import json
+import time
 import os
 import spacy
 import requests
 import os
 import logging
-import en_core_web_sm
+from datetime import datetime
 
 
+def get_key(filename, key):
+    f = filename
+    cred = json.loads(open(f).read())
+    return cred[key]
 
 app = Flask(__name__)
 
@@ -18,6 +23,7 @@ def index():
 
 @app.route('/translate', methods=['GET'])
 def translate():
+    api_key = get_key('./Secrets/yandex_key.json', 'api_key')
     text=request.args["txt"]
     r = requests.post('https://translate.yandex.net/api/v1.5/tr.json/translate',
                       data={'key': api_key,
@@ -26,24 +32,36 @@ def translate():
     return jsonify(r.json())
 
 
-
 @app.route('/query-example')
 def query_example():
-    text=request.args["text"]
-    input={"text":text}
 
-    def get_key():
-        # f = './Secrets/yandex_key.json'
-        # cred = json.loads(open(f).read())
-        # return cred['api_key']
-        return os.getenv('YANDEX_API_KEY')
+    def get_key(filename,key):
+        f = filename
+        cred = json.loads(open(f).read())
+        return cred[key]
+
+    def get_level(filename,ip):
+        f = filename
+        cred = json.loads(open(f).read())
+        if ip not in cred:
+            cred[ip]=1
+        return cred[ip]
+
+    def update_level(filepath,level,ip):
+        with open(filepath, 'r') as fp:
+            information = json.load(fp)
+        information[ip]=level
+        with open(filepath, 'w') as fp:
+            json.dump(information, fp, indent=2)
+        return level
 
     logger = logging.getLogger('translation_backed')
     logger.setLevel(logging.DEBUG)
 
-    nlp = en_core_web_sm.load()
+    nlp = spacy.load(
+        '/home/rahul/anaconda3/envs/ai4_env/lib/python3.7/site-packages/en_core_web_sm/en_core_web_sm-2.0.0/')
 
-    API_KEY = get_key()
+    API_KEY = get_key('./Secrets/yandex_key.json','api_key')
 
     def get_translation(word):
         r = requests.post('https://translate.yandex.net/api/v1.5/tr.json/translate',
@@ -159,12 +177,12 @@ def query_example():
         return output
 
     def read_dummy_data():
-        with open('../test-doc.txt') as f:
+        with open('./test-doc.txt') as f:
             output = f.readlines()
 
         return output
 
-    def main_function(input=None):
+    def main_function(input=None,ip=None):
         """
 
         Parameters
@@ -186,7 +204,11 @@ def query_example():
             source = input.get('source', None)
 
             # Ultimately, we'd like to learn this threshold and adjust over time
-            user_level = input.get('level', 1)
+            if not input.get("level"):
+                user_level=get_level("./users_level_file.json",ip)
+            elif input.get("level"):
+                given_level=input.get("level")
+                user_level = update_level("./users_level_file.json",given_level,ip)
         else:
             input = dict()
             input['text'] = read_dummy_data()
@@ -206,12 +228,35 @@ def query_example():
 
         logger.info(translated_text)
 
-        return translated_text
-
-    translated_text = main_function(input)
+        return [{"ip":ip,"user_level":user_level}]+translated_text
+    #translated_text={id:i for id,i in enumerate(main_function(input))}
+    # text = request.args["text"]
+    # input = {"text": text}
+    input=request.args
+    start = time.clock()
+    ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    now = datetime.now()
+    time_taken=time.clock() - start
+    translated_text=[{"timestamp":now,"time_taken":time_taken}]+main_function(input,ip)
+    # return jsonify({id:item for id, item in enumerate(translated_text)})
     return jsonify(translated_text)
+
+    def update_level(level, read_chunks, unknown_chunks, k=1):
+        expected = 0
+        actual = 0
+        for chunk in read_chunks:
+            words = chunk.split(' ')
+            chunk_level = max(get_word_level(w) for w in words)
+            expected += 1 / (1 + 10**((chunk_level - level)/20))
+            if chunk not in unknown_chunks:
+                actual += 1
+            else:
+                actual -= 1
+
+        level += k * (actual - expected)
+        return max(level, 1)
 
 
 
 if __name__ == '__main__':
-    app.run(debug=True,host= '172.16.54.207', port=5000) #run app in debug mode on port 5000
+    app.run(debug=True,host= '127.0.0.1', port=5000) #run app in debug mode on port 5000
