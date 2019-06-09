@@ -32,7 +32,7 @@ def setup_wordlists(directory='vocab/'):
 def update_user_json(filepath, translated_text, ip):
     with open(filepath, 'r') as fp:
         user_dict = json.load(fp)
-    user_dict[ip]['most_recent_session']['translated_chunks'] = [chunk['text'] for chunk in translated_text if chunk['original'] is not None]
+    user_dict[ip]['most_recent_session']['translated_chunks'] = [chunk['original'] for chunk in translated_text if chunk['original'] is not None]
     with open(filepath, 'w') as fp:
         json.dump(user_dict, fp, indent=2)
 
@@ -82,7 +82,7 @@ def query_example():
         with open(filename, 'w') as fp:
             json.dump(cred, fp, indent=2)
 
-        return cred[ip]
+        return cred[ip]['last_estimated_level']
 
     def get_session_info(filename, ip):
         f = filename
@@ -177,7 +177,7 @@ def query_example():
         actual = 0
         for chunk in read_chunks:
             words = chunk.split(' ')
-            chunk_level = max(word_to_difficulty[w] for w in words)
+            chunk_level = max(word_to_difficulty.get(w, 10) for w in words)
             expected += 1 / (1 + 10**((chunk_level - level)/20))
             if chunk not in unknown_chunks:
                 actual += 1
@@ -185,7 +185,10 @@ def query_example():
                 actual -= 1
 
         level += k * (actual - expected)
-        return max(level, 1)
+
+        level = max(level, 1)
+
+        return level
 
 
 
