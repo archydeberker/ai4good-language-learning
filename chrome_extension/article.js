@@ -7,10 +7,10 @@ var score = {
   "Medium": 0,
   "Hard": 0
 };
+
 // Actual assessement quizz
 const assessment_quiz_dict = [["bonjour", "Easy"],["ecole", "Medium"],["marche", "Medium"],["dehors", "Hard"]];
 var assessment_idx = 0;
-
 
 var current_bienvenue = 0;
 const bienvenue_header = document.createElement("div");
@@ -48,7 +48,7 @@ function display() {
 		var level_known = assessment_quiz_dict[assessment_idx][1]
 		score[level_known] += 1;
 		assessment_idx += 1;
-		alert(JSON.stringify(score));
+		//alert(JSON.stringify(score));
 		display();
 	    }
 	    bienvenue_header.append(bienvenue_yes);
@@ -95,27 +95,39 @@ function display() {
 
 display();
 
-if (host == "www.nytimes.com"){
-  text_chunks = document.getElementsByClassName("g-body");
-  for (let index = 0; index < text_chunks.length; index++) {
-    var element = text_chunks[index].innerText;
-    console.log(element);
+// if (host == "www.nytimes.com"){
+//   text_chunks = document.getElementsByClassName("p");
+//   for (let index = 0; index < text_chunks.length; index++) {
+//     var element = text_chunks[index].innerText;
+//     console.log(element);
 
-    const Http = new XMLHttpRequest();
-    const url = "http://662f13f9.ngrok.io/query-example?text=" + element;
-    Http.open("GET", url);
-    Http.send();
+//     const Http = new XMLHttpRequest();
+//     const url = "http://662f13f9.ngrok.io/query-example?text=" + element;
+//     Http.open("GET", url);
+//     Http.send();
 
-    Http.onreadystatechange = (e) => {
-      console.log(Http.responseText)
-    }
+//     Http.onreadystatechange = (e) => {
+//       obj = JSON.parse(Http.responseText);
+//       console.log(obj[0]);
+//       obj = JSON.parse(json);
+//       for (let index = 2; index < obj.length; index++) {
+//         console.log(obj[index]);
+//       //   const element = array[index];
+//       //   if(element.text)
+//       //   {
+//       //     console.log(element.original) 
+//       //   }
+//       //   else console.log(element.text);
+//       // }
+//     }
 
-    //text_chunks[index].innerText = 'hello hello hello hello';
-  }
-}
+//     //text_chunks[index].innerText = 'hello hello hello hello';
+//   }
+// }
 
-if (host == "www.ledevoir.com" || host == "time.com"){
+if (host == "www.ledevoir.com" || host == "time.com" || host == "en.wikipedia.org" || host == ""){
   text_chunks = document.getElementsByTagName('p');
+  console.log(text_chunks);
   for (let index = 0; index < text_chunks.length; index++) {
     var element = text_chunks[index].innerText;
     console.log(element);
@@ -129,10 +141,20 @@ if (host == "www.ledevoir.com" || host == "time.com"){
 
     Http.onreadystatechange = function () {
       if(Http.readyState === 4 && Http.status === 200) {
-        console.log(Http.responseText);
-        text_resampled = Http.responseText;
+        obj = JSON.parse(Http.responseText);
+        console.log(obj[0]);
+        for (let index = 2; index < obj.length; index++) {
+          console.log(obj[index]);
+          // const element = array[index];
+          // if(element.text)
+          // {
+          //   console.log(element.original) 
+          // }
+          // else console.log(element.text);
+        }
       }
-    };
+    }
+  }
 
     // text_chunks[index].innerText ="";
     // for (var word in text_resampled) {
@@ -141,5 +163,4 @@ if (host == "www.ledevoir.com" || host == "time.com"){
     //   // text_chunks[index].innerText += text_resampled[word];
     //   // console.log( word + "  " + text_resampled[word])
     // }
-  }
 }
