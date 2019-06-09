@@ -1,5 +1,6 @@
 from flask import Flask, request ,redirect,jsonify
 import requests
+import random
 import json
 import time
 import os
@@ -35,7 +36,6 @@ def update_user_json(filepath, translated_text, ip):
     user_dict[ip]['most_recent_session']['translated_chunks'] = [chunk['original'] for chunk in translated_text if chunk['original'] is not None]
     with open(filepath, 'w') as fp:
         json.dump(user_dict, fp, indent=2)
-
 
 def get_key(filename, key):
     f = filename
@@ -190,9 +190,7 @@ def query_example():
 
         return level
 
-
-
-    def assess_difficulty(parsed_text):
+    def assess_difficulty(parsed_text, user_level, k=1):
         """
 
         Parameters
@@ -204,11 +202,20 @@ def query_example():
         graded_parsed_text: array of text supplemented by difficulty scores
 
         """
+        for chunk in parsed_text:
+            chunk_levels = [word_to_difficulty.get(w, None) for w in chunk['original']]
+            if any(level is None for level in chunk_levels)
+                continue
 
-        # For now, let's return everything with to_translate left as true
+            chunk_level = max(chunk_levels)
+            if chunk_level <= user_level:
+                # to_translate = (random.random() > 1/level)
+                to_translate = True
+                chunk['to_translate'] = to_translate
+
         return parsed_text
 
-    def translate(graded_parsed_text, score_threshold=0):
+    def translate(graded_parsed_text):
         """
         Translate all chunks in graded_parsed_text for which the difficulty score is below the given threshold.
 
@@ -271,9 +278,9 @@ def query_example():
             user_level = update_level(user_level, read_words, unknown_words)
         else:
             input = dict()
-            input['text'] = read_dummy_data()
+            read_words = read_dummy_data()
             input['source'] = 'html'
-            input['level'] = 1
+            user_level = 1
 
         processed_text = process_raw_input(text, source)
 
@@ -281,10 +288,10 @@ def query_example():
         parsed_text = parse_text(processed_text)
 
         logger.info('Assessing difficulty')
-        graded_parsed_text = assess_difficulty(parsed_text)
+        graded_parsed_text = assess_difficulty(parsed_text, user_level)
 
         logger.info('Translating text')
-        translated_text = translate(graded_parsed_text, score_threshold=user_level)
+        translated_text = translate(graded_parsed_text)
 
         logger.info(translated_text)
 
