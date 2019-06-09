@@ -12,7 +12,9 @@ from datetime import datetime
 import en_core_web_sm
 
 
-def setup_wordlists(directory='vocab/'):
+
+
+def setup_wordlists(directory=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vocab')):
     data = {}
     for filename in os.listdir(directory):
         if filename.endswith(".txt"):
@@ -44,9 +46,76 @@ def get_key(filename, key):
 
 app = Flask(__name__)
 
+
+def update_level(level, read_chunks, unknown_chunks, k=1, word_to_difficulty=setup_wordlists()):
+    expected = 0
+    actual = 0
+    for chunk in read_chunks:
+        words = chunk.split(' ')
+        chunk_level = max(word_to_difficulty.get(w, 0) for w in words)
+        if chunk_level == 0:
+            continue
+        expected += 1 / (1 + 10 ** ((chunk_level - level) / 20))
+        if chunk not in unknown_chunks:
+            actual += 1
+        else:
+            actual -= 1
+
+    level += k * (actual - expected)
+
+    level = max(level, 1)
+
+    return level
+
 @app.route('/')
 def index():
     return "WELCOME TO AI4GOOD !!"
+
+
+@app.route('/quiz-results')
+def update_user_word_logs():
+    f = os.path.join(os.path.dirname(os.path.abspath(__file__)), "./users_level_file.json")
+    user_json = json.loads(open(f).read())
+
+    ip = request.args["ip"]
+    known_words = request.args["known"]
+    unknown_words = request.args["unknown"]
+
+    user_json[ip]['most_recent_session']['translated_chunks'] = known_words.split(',') + unknown_words.split(',')
+    user_json[ip]['most_recent_session']['clicked_chunks'] = unknown_words.split(',')
+
+    new_level = update_level(user_json[ip]['last_estimated_level'],
+                             known_words.split(',') + unknown_words.split(','),
+                            unknown_words.split(','))
+
+    user_json[ip]['last_estimated_level'] = new_level
+
+    with open(f, 'w') as fp:
+        json.dump(user_json, fp, indent=2)
+
+    return jsonify(user_json)
+
+
+@app.route('/update-user')
+def push_user_update():
+    f = os.path.join(os.path.dirname(os.path.abspath(__file__)), "./users_level_file.json")
+    user_json = json.loads(open(f).read())
+
+    ip = request.args["ip"]
+    level = request.args["level"]
+
+    user_json[ip]['last_estimated_level'] = int(level)
+
+    with open(f, 'w') as fp:
+        json.dump(user_json, fp, indent=2)
+
+    return jsonify(user_json)
+
+@app.route('/user-levels')
+def user_levels():
+    f =os.path.join(os.path.dirname(os.path.abspath(__file__)), "./users_level_file.json")
+    user_json = json.loads(open(f).read())
+    return jsonify(user_json)
 
 @app.route('/translate', methods=['GET'])
 def translate():
@@ -172,25 +241,7 @@ def query_example():
 
         return output_array
 
-    def update_level(level, read_chunks, unknown_chunks, k=1):
-        expected = 0
-        actual = 0
-        for chunk in read_chunks:
-            words = chunk.split(' ')
-            chunk_level = max(word_to_difficulty.get(w, 0) for w in words)
-            if chunk_level == 0:
-                continue
-            expected += 1 / (1 + 10**((chunk_level - level)/20))
-            if chunk not in unknown_chunks:
-                actual += 1
-            else:
-                actual -= 1
 
-        level += k * (actual - expected)
-
-        level = max(level, 1)
-
-        return level
 
     def assess_difficulty(parsed_text, user_level, k=1):
         """
@@ -285,8 +336,8 @@ def query_example():
             source = input.get('source', None)
 
             # Check the user level from our JSON
-            user_level = get_level("./users_level_file.json", ip)
-            read_words, unknown_words = get_session_info("./users_level_file.json", ip)
+            user_level = get_level(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./users_level_file.json"), ip)
+            read_words, unknown_words = get_session_info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./users_level_file.json"), ip)
 
             user_level = update_level(user_level, read_words, unknown_words)
         else:
@@ -319,10 +370,12 @@ def query_example():
     user_json, translated_text = main_function(input, ip)
 
     # Update the user json with the new words we've translated
-    update_user_json("./users_level_file.json", translated_text, ip)
+    update_user_json(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./users_level_file.json"),
+                     translated_text, ip)
 
     translated_text = [{"timestamp": now,
-                      "time_taken": time_taken}] + translated_text
+                      "time_taken": time_taken,
+                       "ip": ip}] + translated_text
 
     return jsonify(translated_text)
 
