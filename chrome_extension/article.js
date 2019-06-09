@@ -12,7 +12,7 @@ if (learning_enabled){
   // Initial quiz text
   const head_text = document.createElement("span");
   head_text.textContent = "How familiar are you with this word ? ";
-  head_text.setAttribute("style", "padding-left:20%; font-style:normal;");
+  head_text.setAttribute("style", "padding-left:25%; font-style:normal;");
   bienvenue_header.append(head_text);
 
   // Assessement quizz span
@@ -94,7 +94,7 @@ if (host == "www.ledevoir.com" || host == "time.com"){
     text_resampled = {};
 
     Http.onreadystatechange = function () {
-      if(xhr.readyState === 4 && xhr.status === 200) {
+      if(Http.readyState === 4 && Http.status === 200) {
         console.log(Http.responseText);
         text_resampled = Http.responseText;
       }
