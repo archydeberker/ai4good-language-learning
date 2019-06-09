@@ -9,7 +9,12 @@
   },
 
   "content_scripts": [{
-    "js": ["article.js"],
-    "matches": ["<all_urls>"]
+    "js": ["article.js","inject.js"],
+    "matches": ["<all_urls>"],
+    "permissions": [
+      "activeTab",
+      "declarativeContent",
+      "storage"
+    ]
   }]
 }
