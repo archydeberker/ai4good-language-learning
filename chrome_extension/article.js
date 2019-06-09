@@ -148,7 +148,7 @@ if (host == "www.ledevoir.com" || host == "time.com" || host == "en.wikipedia.or
           console.log(obj[resp_index]);
           if(obj[resp_index].original)
           {
-            text_chunks[index].innerHTML += "<a style=\"color = \"red\"; text-decoration: none;\" href=\"#\" title=\"" + obj[resp_index].original + "\">" + obj[resp_index].text + "</a>";
+            text_chunks[index].innerHTML += "<a style=\"font-weight: bold; text-decoration: none;\" href=\"#\" title=\"" + obj[resp_index].original + "\">" + obj[resp_index].text + "</a>";
           }
           else
             text_chunks[index].innerHTML += " " + obj[resp_index].text;
