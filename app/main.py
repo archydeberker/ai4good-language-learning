@@ -3,6 +3,8 @@ import requests
 import os
 import logging
 
+import numpy as np
+
 logger = logging.getLogger('translation_backed')
 logger.setLevel(logging.DEBUG)
 
@@ -10,22 +12,40 @@ nlp = spacy.load('/Users/archy/anaconda/envs/translation/lib/python3.5/site-pack
 
 API_KEY = os.getenv('YANDEX_API_KEY')
 
-directory = "words/"
-data = {}
-for filename in os.listdir(directory):
-    if filename.endswith(".txt"): 
-        print(os.path.join(directory, filename))
-        with open(os.path.join(directory, filename), encoding="ISO-8859-1") as f:
-            data[filename[0:-4]] = f.read().split("Ê\n")
-        continue
-    else:
-        continue
+def setup_wordlists():
+    directory = "words/"
+    data = {}
+    for filename in os.listdir(directory):
+        if filename.endswith(".txt"):
+            print(os.path.join(directory, filename))
+            with open(os.path.join(directory, filename), encoding="ISO-8859-1") as f:
+                data[filename[0:-4]] = f.read().split("Ê\n")
+            continue
+        else:
+            continue
 
-def get_word_level(word):
+    words_to_difficulty = {}
     for level, words in data.items():
-        if word in words:
-            return level[-2:]
-        
+        level_int = int(level.split()[-1])
+        for word in words:
+            words_to_difficulty[word] = level_int
+
+    return words_to_difficulty
+
+
+def get_word_level(chunk, words_to_difficulty, aggregator=np.nanmean):
+    out = []
+    for word in chunk['text'].split():
+        out.append(words_to_difficulty.get(word.strip(), np.nan))
+
+    if len(out) > 1:
+        return aggregator(out)
+    elif len(out) == 1:
+        return out[0]
+    else:
+        return None
+
+
 def get_translation(word):
     r = requests.post('https://translate.yandex.net/api/v1.5/tr.json/translate',
                       data={'key': API_KEY,
@@ -48,7 +68,8 @@ def process_raw_input(input, source='html'):
     processed text (str)
     """
     if source == 'html':
-        return '\n'.join(input)
+        concatenated = '\n'.join(input)
+        return concatenated.strip()
 
 
 def _add_chunk(text, original_text=None):
@@ -96,7 +117,7 @@ def parse_text(text_input):
     return output_array
 
 
-def assess_difficulty(parsed_text):
+def assess_difficulty(parsed_text, words_to_difficulty):
     """
 
     Parameters
@@ -108,19 +129,20 @@ def assess_difficulty(parsed_text):
     graded_parsed_text: array of text supplemented by difficulty scores
 
     """
-    output = []
-    for word in parsed_text:
-        level = get_word_level(word)
-        if level is not None:
-            output.append(int(level))
-        else:
-            output.append(20)
-        
+
+    for chunk in parsed_text:
+        if chunk['to_translate']: # eligible for translation
+            level = get_word_level(chunk, words_to_difficulty)
+            if level is not None:
+                chunk['to_translate'] = level
+            else:
+                chunk['to_translate'] = 20
+
     # For now, let's return everything with to_translate left as true
-    return np.mean(output)
+    return parsed_text
 
 
-def translate(graded_parsed_text, score_threshold=0):
+def translate(graded_parsed_text, score_threshold=1):
     """
     Translate all chunks in graded_parsed_text for which the difficulty score is below the given threshold.
 
@@ -140,11 +162,14 @@ def translate(graded_parsed_text, score_threshold=0):
     """
     output = []
     for chunk in graded_parsed_text:
-        if chunk['to_translate']:
+        if chunk['to_translate'] > (20 - score_threshold):
             translated_text = get_translation(chunk['text'])
             output.append(_add_chunk(translated_text, chunk['text']))
         else:
             output.append(_add_chunk(chunk['text'], None))
+            if chunk['to_translate']:
+                logger.warning("Not translating %s because its too hard for user of level %d"%(chunk['text'],
+                                                                                            score_threshold))
 
     return output
 
@@ -156,7 +181,7 @@ def read_dummy_data():
     return output
 
 
-def main(input=None):
+def main(input=None, user_level=1):
     """
 
     Parameters
@@ -183,15 +208,19 @@ def main(input=None):
         input = dict()
         input['text'] = read_dummy_data()
         input['source'] = 'html'
-        input['level'] = 1
+        input['level'] = user_level
 
+    words_to_difficulty = setup_wordlists()
     processed_text = process_raw_input(input['text'], input['source'])
 
     logger.info('Parsing text')
     parsed_text = parse_text(processed_text)
 
     logger.info('Assessing difficulty')
-    graded_parsed_text = assess_difficulty(parsed_text)
+
+    # Takes in series of text chunks with translatability tagged, then assign numerical score to each chunk for eventual
+    # thresholding
+    graded_parsed_text = assess_difficulty(parsed_text, words_to_difficulty)
 
     logger.info('Translating text')
     translated_text = translate(graded_parsed_text, score_threshold=input['level'])
@@ -202,5 +231,5 @@ def main(input=None):
 
 
 if __name__ == '__main__':
-    main()
+    main(user_level=19)
 
