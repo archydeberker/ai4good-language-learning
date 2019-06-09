@@ -8,7 +8,26 @@ import requests
 import os
 import logging
 from datetime import datetime
+import en_core_web_sm
 
+
+def setup_wordlists(directory='vocab/'):
+    data = {}
+    for filename in os.listdir(directory):
+        if filename.endswith(".txt"):
+            with open(os.path.join(directory, filename), encoding="ISO-8859-1") as f:
+                data[filename[0:-4]] = f.read().split("Ê\n")
+            continue
+        else:
+            continue
+
+    words_to_difficulty = {}
+    for level, words in data.items():
+        level_int = int(level.split()[-1])
+        for word in words:
+            words_to_difficulty[word] = level_int
+
+    return words_to_difficulty
 
 def update_user_json(filepath, translated_text, ip):
     with open(filepath, 'r') as fp:
@@ -31,7 +50,11 @@ def index():
 
 @app.route('/translate', methods=['GET'])
 def translate():
-    api_key = get_key('./Secrets/yandex_key.json', 'api_key')
+    try:
+        api_key = get_key('./Secrets/yandex_key.json', 'api_key')
+    except:
+        api_key = os.getenv('YANDEX_API_KEY')
+
     text=request.args["txt"]
     r = requests.post('https://translate.yandex.net/api/v1.5/tr.json/translate',
                       data={'key': api_key,
@@ -52,32 +75,31 @@ def query_example():
         f = filename
         cred = json.loads(open(f).read())
         if ip not in cred:
-            cred[ip] = 1
+            cred[ip] = dict(last_estimated_level=10,
+                            most_recent_session=dict(translated_chunks=[],
+                                                     clicked_chunks=[]))
+
+        with open(filename, 'w') as fp:
+            json.dump(cred, fp, indent=2)
+
         return cred[ip]
 
-    def get_session_info(filename):
+    def get_session_info(filename, ip):
         f = filename
         cred = json.loads(open(f).read())
-        if ip not in cred:
-            cred[ip] = 1
 
         return cred[ip]['most_recent_session']['translated_chunks'], cred[ip]['most_recent_session']['clicked_chunks']
 
-    def update_level(filepath, level, ip):
-        with open(filepath, 'r') as fp:
-            information = json.load(fp)
-        information[ip] = level
-        with open(filepath, 'w') as fp:
-            json.dump(information, fp, indent=2)
-        return level
 
     logger = logging.getLogger('translation_backed')
     logger.setLevel(logging.DEBUG)
 
-    nlp = spacy.load(
-        '/home/rahul/anaconda3/envs/ai4_env/lib/python3.7/site-packages/en_core_web_sm/en_core_web_sm-2.0.0/')
+    nlp = en_core_web_sm.load()
 
-    API_KEY = get_key('./Secrets/yandex_key.json','api_key')
+    try:
+        API_KEY = get_key('./Secrets/yandex_key.json', 'api_key')
+    except:
+        API_KEY = os.getenv('YANDEX_API_KEY')
 
     word_to_difficulty = setup_wordlists()
 
@@ -86,7 +108,7 @@ def query_example():
                           data={'key': API_KEY,
                                 'text': word,
                                 'lang': 'en-fr'})
-
+        print(r.json())
         return ' '.join(r.json()['text'])
 
     def process_raw_input(input, source='html'):
@@ -165,23 +187,7 @@ def query_example():
         level += k * (actual - expected)
         return max(level, 1)
 
-    def setup_wordlists(directory='vocab/'):
-        data = {}
-        for filename in os.listdir(directory):
-            if filename.endswith(".txt"):
-                with open(os.path.join(directory, filename), encoding="ISO-8859-1") as f:
-                    data[filename[0:-4]] = f.read().split("Ê\n")
-                continue
-            else:
-                continue
 
-        words_to_difficulty = {}
-        for level, words in data.items():
-            level_int = int(level.split()[-1])
-            for word in words:
-                words_to_difficulty[word] = level_int
-
-        return words_to_difficulty
 
     def assess_difficulty(parsed_text):
         """
@@ -251,7 +257,6 @@ def query_example():
 
         """
 
-
         if input is not None:
             text = input.get('text')
             source = input.get('source', None)
@@ -280,7 +285,7 @@ def query_example():
 
         logger.info(translated_text)
 
-        return [{"ip": ip, "user_level": user_level}] + translated_text
+        return [{"ip": ip, "user_level": user_level}], translated_text
 
     input = request.args
     start = time.clock()
@@ -297,6 +302,7 @@ def query_example():
                       "time_taken": time_taken}] + translated_text
 
     return jsonify(translated_text)
+
 
 if __name__ == '__main__':
     app.run(debug=True,host= '127.0.0.1', port=5000) #run app in debug mode on port 5000
