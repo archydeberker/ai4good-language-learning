@@ -285,8 +285,8 @@ def query_example():
             source = input.get('source', None)
 
             # Check the user level from our JSON
-            user_level = get_level("./users_level_file.json", ip)
-            read_words, unknown_words = get_session_info("./users_level_file.json", ip)
+            user_level = get_level(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./users_level_file.json"), ip)
+            read_words, unknown_words = get_session_info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./users_level_file.json"), ip)
 
             user_level = update_level(user_level, read_words, unknown_words)
         else:
@@ -319,7 +319,8 @@ def query_example():
     user_json, translated_text = main_function(input, ip)
 
     # Update the user json with the new words we've translated
-    update_user_json("./users_level_file.json", translated_text, ip)
+    update_user_json(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./users_level_file.json"),
+                     translated_text, ip)
 
     translated_text = [{"timestamp": now,
                       "time_taken": time_taken}] + translated_text
