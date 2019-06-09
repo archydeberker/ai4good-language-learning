@@ -1,0 +1,26 @@
+{
+  "192.108.108.45": {
+    "most_recent_session": {
+      "clicked_chunks": [
+        "my name"
+      ],
+      "translated_chunks": [
+        "my name",
+        " a house",
+        "find a "
+      ]
+    },
+    "last_estimated_level": 4
+  },
+  "192.108.1128.293": {
+    "most_recent_session": null,
+    "last_estimated_level": 3
+  },
+  "127.0.0.1": {
+    "most_recent_session": {
+      "clicked_chunks": [],
+      "translated_chunks": []
+    },
+    "last_estimated_level": 15
+  }
+}
