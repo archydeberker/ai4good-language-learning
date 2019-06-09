@@ -48,17 +48,17 @@ if (learning_enabled){
   bienvenue_header.append(assessment_quiz_level_span);
 
   // Actual assessement quizz
-  var assessment_quiz_dict = {
-    "bonjour": "easy",
-    "ecole": "med",
-    "marche": "high",
-    "dehors": "easy"
+  var assessment_quiz_dict = [{"bonjour": "easy"},{"ecole": "med"},{"marche": "high"},{"dehors": "easy"}];
+
+  word_count = 0;
+  scores = {
+    "easy": 0,
+    "medium":0,
+    "hard":0
   }
 
-  for (var word in assessment_quiz_dict) {
-    console.log(assessment_quiz_dict[word]);
-    assessment_quiz_span.innerText = word;
-  }
+  assessment_quiz_span.innerText = Object.keys(assessment_quiz_dict[word_count]);
+  console.log(Object.values(assessment_quiz_dict[word_count]))
 }
 
 if (host == "www.nytimes.com"){
