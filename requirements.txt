@@ -1,3 +1,4 @@
+https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.1.0/en_core_web_sm-2.1.0.tar.gz
 appnope==0.1.0
 backcall==0.1.0
 bleach==3.1.0
@@ -8,6 +9,8 @@ cymem==2.0.2
 decorator==4.4.0
 defusedxml==0.6.0
 entrypoints==0.3
+gunicorn
+Flask==1.0.2
 idna==2.8
 ipykernel==5.1.0
 ipython==7.5.0
