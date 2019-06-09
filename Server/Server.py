@@ -32,7 +32,6 @@ def translate():
     return jsonify(r.json())
 
 
-
 @app.route('/query-example')
 def query_example():
 
@@ -241,6 +240,21 @@ def query_example():
     translated_text=[{"timestamp":now,"time_taken":time_taken}]+main_function(input,ip)
     # return jsonify({id:item for id, item in enumerate(translated_text)})
     return jsonify(translated_text)
+
+    def update_level(level, read_words, highlighted_words, k=1):
+        expected = 0
+        actual = 0
+        for word in read_words:
+            word_level = get_word_level(word)
+            word_level = 10
+            expected += 1 / (1 + 10**((word_level - level)/20))
+            if word not in highlighted_words:
+                actual += 1
+            else:
+                actual -= 1
+
+        level += k * (actual - expected)
+        return max(level, 1)
 
 
 
