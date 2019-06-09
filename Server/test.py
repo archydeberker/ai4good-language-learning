@@ -1,4 +1,5 @@
 import spacy
+import en_core_web_sm
 import requests
 import os
 import logging
@@ -14,7 +15,7 @@ def get_key():
 logger = logging.getLogger('translation_backed')
 logger.setLevel(logging.DEBUG)
 
-nlp = spacy.load(r'/home/rahul/anaconda3/envs/ai4_env/lib/python3.7/site-packages/en_core_web_sm/en_core_web_sm-2.0.0/')
+nlp = spacy.load(os.path.join(en_core_web_sm.__path__[0],"en_core_web_sm-2.0.0"))
 
 API_KEY = get_key()
 
