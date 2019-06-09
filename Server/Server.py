@@ -12,7 +12,7 @@ from datetime import datetime
 import en_core_web_sm
 
 
-def setup_wordlists(directory='vocab/'):
+def setup_wordlists(directory=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vocab')):
     data = {}
     for filename in os.listdir(directory):
         if filename.endswith(".txt"):
