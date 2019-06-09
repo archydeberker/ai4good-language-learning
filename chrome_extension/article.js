@@ -1,5 +1,11 @@
 var learning_enabled = true;
 var host = window.location.host;
+max_level = ["Easy"];
+var score = {
+  "Easy": 0,
+  "Medium": 0,
+  "Hard": 0
+};
 
 if (learning_enabled){
 
@@ -40,25 +46,30 @@ if (learning_enabled){
   bienvenue_no.textContent = "👎";
   bienvenue_header.append(bienvenue_no);
 
-
-  // Level counter
-  var assessment_quiz_level_span = document.createElement("SPAN");
-  assessment_quiz_level_span.textContent = "Level: " + 16;
-  assessment_quiz_level_span.setAttribute("style", "float:right;");
-  bienvenue_header.append(assessment_quiz_level_span);
-
   // Actual assessement quizz
-  var assessment_quiz_dict = [{"bonjour": "easy"},{"ecole": "med"},{"marche": "high"},{"dehors": "easy"}];
+  var assessment_quiz_dict = [{"bonjour": "easy"},{"ecole": "medium"},{"marche": "hard"},{"dehors": "easy"}];
 
   word_count = 0;
-  scores = {
-    "easy": 0,
-    "medium":0,
-    "hard":0
+
+  function getMaxScore() {
+    max_score = 0;
+    max_level = ["Easy"];
+    for (var level in score) {
+      if (score[level] > max_score) {
+        max_score = score[level];
+        max_level = level;
+      }
+    }
   }
 
   assessment_quiz_span.innerText = Object.keys(assessment_quiz_dict[word_count]);
   console.log(Object.values(assessment_quiz_dict[word_count]))
+
+  // Level counter
+  var assessment_quiz_level_span = document.createElement("SPAN");
+  assessment_quiz_level_span.textContent = "Level: " + max_level;
+  assessment_quiz_level_span.setAttribute("style", "float:right;");
+  bienvenue_header.append(assessment_quiz_level_span);
 }
 
 if (host == "www.nytimes.com"){
