@@ -346,7 +346,8 @@ def query_example():
                      translated_text, ip)
 
     translated_text = [{"timestamp": now,
-                      "time_taken": time_taken}] + translated_text
+                      "time_taken": time_taken,
+                       "ip": ip}] + translated_text
 
     return jsonify(translated_text)
 
