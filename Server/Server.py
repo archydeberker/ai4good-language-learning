@@ -172,11 +172,11 @@ def query_example():
 
     word_to_difficulty = setup_wordlists()
 
-    def get_translation(word):
+    def get_translation(word, lang='en-fr'):
         r = requests.post('https://translate.yandex.net/api/v1.5/tr.json/translate',
                           data={'key': API_KEY,
                                 'text': word,
-                                'lang': 'en-fr'})
+                                'lang': lang})
         print(r.json())
         return ' '.join(r.json()['text'])
 
@@ -279,7 +279,7 @@ def query_example():
 
         return parsed_text
 
-    def translate(graded_parsed_text):
+    def translate(graded_parsed_text, language):
         """
         Translate all chunks in graded_parsed_text for which the difficulty score is below the given threshold.
 
@@ -300,7 +300,7 @@ def query_example():
         output = []
         for chunk in graded_parsed_text:
             if chunk['to_translate']:
-                translated_text = get_translation(chunk['text'])
+                translated_text = get_translation(chunk['text'], lang=language)
                 output.append(_add_chunk(translated_text, chunk['text']))
             else:
                 output.append(_add_chunk(chunk['text'], None))
@@ -313,7 +313,7 @@ def query_example():
 
         return output
 
-    def main_function(input=None,ip=None):
+    def main_function(input=None,ip=None, language='en-fr'):
         """
 
         Parameters
@@ -355,19 +355,24 @@ def query_example():
         graded_parsed_text = assess_difficulty(parsed_text, user_level)
 
         logger.info('Translating text')
-        translated_text = translate(graded_parsed_text)
+        translated_text = translate(graded_parsed_text, language=language)
 
         logger.info(translated_text)
 
         return [{"ip": ip, "user_level": user_level}], translated_text
 
     input = request.args
+    if 'lan' in input:
+        language = input['lan']
+    else:
+        language='en-fr'
+
     start = time.clock()
     ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
     now = datetime.now()
     time_taken = time.clock() - start
 
-    user_json, translated_text = main_function(input, ip)
+    user_json, translated_text = main_function(input, ip, language)
 
     # Update the user json with the new words we've translated
     update_user_json(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./users_level_file.json"),
