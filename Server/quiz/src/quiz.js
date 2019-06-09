@@ -86,5 +86,5 @@ export const quiz =  {
         "correctAnswer": "1"
       }
     ],
-    "quizSynopsis": "Do you understand the follow French words?"
+    "quizSynopsis": "Do you understand the following French words?"
   } 
