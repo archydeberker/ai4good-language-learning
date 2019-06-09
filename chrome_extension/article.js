@@ -7,6 +7,11 @@ var score = {
   "Medium": 0,
   "Hard": 0
 };
+// Actual assessement quizz
+const assessment_quiz_dict = [["bonjour", "Easy"],["ecole", "Medium"],["marche", "Medium"],["dehors", "Hard"]];
+var assessment_idx = 0;
+
+
 var current_bienvenue = 0;
 const bienvenue_header = document.createElement("div");
 
@@ -21,59 +26,67 @@ function display() {
 	current_bienvenue += 1;
 	current_bienvenue = current_bienvenue % bienvenues_text.length;
 
-	// Initial quiz text
-	const head_text = document.createElement("span");
-	head_text.textContent = "How familiar are you with this word ? ";
-	head_text.setAttribute("style", "padding-left:5cm; font-style:normal;");
-	bienvenue_header.append(head_text);
+	if (assessment_idx <  assessment_quiz_dict.length) {
+	    // Initial quiz text
+	    const head_text = document.createElement("span");
+	    head_text.textContent = "How familiar are you with this word ? ";
+	    head_text.setAttribute("style", "padding-left:5cm; font-style:normal;");
+	    bienvenue_header.append(head_text);
 
-	// Assessement quizz span
-	var assessment_quiz_span = document.createElement("SPAN");
-	assessment_quiz_span.id = "assessment_quiz_span";
-	assessment_quiz_span.setAttribute("style", "padding-left:40px; padding-right:40px; text-transform:capitalize; font-style:italic;");
-	bienvenue_header.append(assessment_quiz_span);
+	    // Assessement quizz span
+	    var assessment_quiz_span = document.createElement("SPAN");
+	    assessment_quiz_span.id = "assessment_quiz_span";
+	    assessment_quiz_span.setAttribute("style", "padding-left:40px; padding-right:40px; text-transform:capitalize; font-style:italic;");
+	    bienvenue_header.append(assessment_quiz_span);
 
-	// Assessement yes button
-	var bienvenue_yes = document.createElement("SPAN");
-	bienvenue_yes.id = "bienvenue_yes";
-	bienvenue_yes.setAttribute("style", "cursor: pointer;");
-	bienvenue_yes.textContent = "👍";
-	bienvenue_header.append(bienvenue_yes);
+	    // Assessement yes button
+	    var bienvenue_yes = document.createElement("SPAN");
+	    bienvenue_yes.id = "bienvenue_yes";
+	    bienvenue_yes.setAttribute("style", "cursor: pointer;");
+	    bienvenue_yes.textContent = "👍";
+	    bienvenue_yes.onclick = function() {
+		var level_known = assessment_quiz_dict[assessment_idx][1]
+		score[level_known] += 1;
+		assessment_idx += 1;
+		alert(JSON.stringify(score));
+		display();
+	    }
+	    bienvenue_header.append(bienvenue_yes);
 
-	// Empty divider span
-	var divider_span = document.createElement("SPAN");
-	divider_span.setAttribute("style", "padding-left:20px;");
-	bienvenue_header.append(divider_span);
+	    // Empty divider span
+	    var divider_span = document.createElement("SPAN");
+	    divider_span.setAttribute("style", "padding-left:20px;");
+	    bienvenue_header.append(divider_span);
 
-	// Assessement no button
-	var bienvenue_no = document.createElement("SPAN");
-	bienvenue_no.id = "bienvenue_no";
-	bienvenue_no.setAttribute("style", "cursor: pointer;");
-	bienvenue_no.textContent = "👎";
-	bienvenue_header.append(bienvenue_no);
+	    // Assessement no button
+	    var bienvenue_no = document.createElement("SPAN");
+	    bienvenue_no.id = "bienvenue_no";
+	    bienvenue_no.setAttribute("style", "cursor: pointer;");
+	    bienvenue_no.textContent = "👎";
+	    bienvenue_no.onclick = function() {
+		assessment_idx += 1;
+		display();
+	    }
+	    bienvenue_header.append(bienvenue_no);
 
-	// Actual assessement quizz
-	var assessment_quiz_dict = [{"bonjour": "easy"},{"ecole": "medium"},{"marche": "hard"},{"dehors": "easy"}];
-
-	word_count = 0;
-
-	function getMaxScore() {
-	    max_score = 0;
-	    max_level = ["Easy"];
+	    assessment_quiz_span.innerText = assessment_quiz_dict[assessment_idx][0];
+	    console.log(Object.values(assessment_quiz_dict[assessment_idx]))
+	}// end show quiz
+	function getMaxLevel() {
+	    max_score = -1;
+	    max_level = "None";
 	    for (var level in score) {
 		if (score[level] > max_score) {
 		    max_score = score[level];
 		    max_level = level;
 		}
 	    }
+	    return max_level;
 	}
-
-	assessment_quiz_span.innerText = Object.keys(assessment_quiz_dict[word_count]);
-	console.log(Object.values(assessment_quiz_dict[word_count]))
 
 	// Level counter
 	var assessment_quiz_level_span = document.createElement("SPAN");
-	assessment_quiz_level_span.textContent = "Level: " + max_level;
+	assessment_quiz_level_span.textContent = "Level: " + getMaxLevel();
 	assessment_quiz_level_span.setAttribute("style", "float:right;");
 	bienvenue_header.append(assessment_quiz_level_span);
     }//end if
