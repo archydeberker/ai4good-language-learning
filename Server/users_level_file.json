@@ -1,26 +1,29 @@
 {
+  "192.108.108.45": {
+    "most_recent_session": {
+      "translated_chunks": [
+        "archy",
+        "dog",
+        "cats",
+        "giraffe",
+        "agave",
+        "aardvark"
+      ],
+      "clicked_chunks": [
+        "aardvark"
+      ]
+    },
+    "last_estimated_level": 4.9052626183860815
+  },
+  "192.108.1128.293": {
+    "most_recent_session": null,
+    "last_estimated_level": 3
+  },
   "127.0.0.1": {
     "most_recent_session": {
       "translated_chunks": [],
       "clicked_chunks": []
     },
     "last_estimated_level": 15
-  },
-  "192.108.108.45": {
-    "most_recent_session": {
-      "translated_chunks": [
-        "my name",
-        " a house",
-        "find a "
-      ],
-      "clicked_chunks": [
-        "my name"
-      ]
-    },
-    "last_estimated_level": 10
-  },
-  "192.108.1128.293": {
-    "most_recent_session": null,
-    "last_estimated_level": 3
   }
 }
