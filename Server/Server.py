@@ -44,9 +44,26 @@ def get_key(filename, key):
 
 app = Flask(__name__)
 
+
 @app.route('/')
 def index():
     return "WELCOME TO AI4GOOD !!"
+
+
+@app.route('/update-user')
+def push_user_update():
+    f = os.path.join(os.path.dirname(os.path.abspath(__file__)), "./users_level_file.json")
+    user_json = json.loads(open(f).read())
+
+    ip = request.args["ip"]
+    level = request.args["level"]
+
+    user_json[ip]['last_estimated_level'] = int(level)
+
+    with open(f, 'w') as fp:
+        json.dump(user_json, fp, indent=2)
+
+    return jsonify(user_json)
 
 @app.route('/user-levels')
 def user_levels():
