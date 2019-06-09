@@ -48,7 +48,7 @@ function display() {
 		var level_known = assessment_quiz_dict[assessment_idx][1]
 		score[level_known] += 1;
 		assessment_idx += 1;
-		alert(JSON.stringify(score));
+		//alert(JSON.stringify(score));
 		display();
 	    }
 	    bienvenue_header.append(bienvenue_yes);
