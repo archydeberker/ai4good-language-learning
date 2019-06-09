@@ -48,6 +48,12 @@ app = Flask(__name__)
 def index():
     return "WELCOME TO AI4GOOD !!"
 
+@app.route('/user-levels')
+def user_levels():
+    f =os.path.join(os.path.dirname(os.path.abspath(__file__)), "./users_level_file.json")
+    user_json = json.loads(open(f).read())
+    return jsonify(user_json)
+
 @app.route('/translate', methods=['GET'])
 def translate():
     try:

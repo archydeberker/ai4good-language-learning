@@ -1,26 +1,26 @@
 {
   "127.0.0.1": {
+    "last_estimated_level": 15,
     "most_recent_session": {
-      "clicked_chunks": [],
-      "translated_chunks": []
-    },
-    "last_estimated_level": 15
+      "translated_chunks": [],
+      "clicked_chunks": []
+    }
+  },
+  "192.108.1128.293": {
+    "last_estimated_level": 3,
+    "most_recent_session": null
   },
   "192.108.108.45": {
+    "last_estimated_level": 4,
     "most_recent_session": {
-      "clicked_chunks": [
-        "my name"
-      ],
       "translated_chunks": [
         "my name",
         " a house",
         "find a "
+      ],
+      "clicked_chunks": [
+        "my name"
       ]
-    },
-    "last_estimated_level": 4
-  },
-  "192.108.1128.293": {
-    "most_recent_session": null,
-    "last_estimated_level": 3
+    }
   }
 }
