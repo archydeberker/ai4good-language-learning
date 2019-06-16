@@ -1,17 +1,14 @@
-from flask import Flask, request ,redirect,jsonify
-import requests
-import random
 import json
-import time
-import os
-import spacy
-import requests
-import os
 import logging
+import os
+import random
+import time
 from datetime import datetime
+
 import en_core_web_sm
-
-
+import requests
+import spacy
+from flask import Flask, jsonify, redirect, request
 
 
 def setup_wordlists(directory=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vocab')):

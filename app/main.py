@@ -1,9 +1,9 @@
-import spacy
-import requests
-import os
 import logging
+import os
 
 import numpy as np
+import requests
+import spacy
 
 logger = logging.getLogger('translation_backed')
 logger.setLevel(logging.DEBUG)
@@ -232,4 +232,3 @@ def main(input=None, user_level=1):
 
 if __name__ == '__main__':
     main(user_level=19)
-
