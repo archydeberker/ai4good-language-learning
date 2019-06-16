@@ -133,7 +133,7 @@ if (host == "www.ledevoir.com" || host == "time.com" || host == "en.wikipedia.or
     console.log(element);
 
     var Http = new XMLHttpRequest();
-    var url = "http://ai4good-translation.herokuapp.com/query-example?text=" + element;
+    var url = "http://ai4good-translation.herokuapp.com/query-example?text=" + element +'&lan=en-fr';
     Http.open("GET", url);
     Http.send();
 
