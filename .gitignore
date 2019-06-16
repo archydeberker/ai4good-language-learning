@@ -1,3 +1,4 @@
+.DS*
 .ipynb_checkpoints
 ./Server/Secrets/*
 .idea
